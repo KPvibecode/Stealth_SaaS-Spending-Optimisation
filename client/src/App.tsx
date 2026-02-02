@@ -432,9 +432,6 @@ function App() {
                     <th className="sortable" onClick={() => handleSort('name')}>
                       Name {sortColumn === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
                     </th>
-                    <th className="sortable" onClick={() => handleSort('category')}>
-                      Category {sortColumn === 'category' && (sortDirection === 'asc' ? '↑' : '↓')}
-                    </th>
                     <th className="sortable" onClick={() => handleSort('cost')}>
                       Monthly Cost {sortColumn === 'cost' && (sortDirection === 'asc' ? '↑' : '↓')}
                     </th>
@@ -456,7 +453,6 @@ function App() {
                         <strong>{tool.name}</strong>
                         <span className="vendor-text"> - {tool.vendor}</span>
                       </td>
-                      <td><span className={`category-badge ${tool.category.toLowerCase().replace(/\s/g, '-')}`}>{tool.category}</span></td>
                       <td>${Number(tool.cost_monthly || 0).toFixed(2)}</td>
                       <td>{tool.source_type === 'microsoft_entra' ? 'Microsoft Entra' : 'Amex CSV'}</td>
                       <td>

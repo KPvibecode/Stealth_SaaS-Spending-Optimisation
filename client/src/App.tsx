@@ -392,8 +392,7 @@ function App() {
                     <tr key={tool.id}>
                       <td>
                         <strong>{tool.name}</strong>
-                        <br />
-                        <small>{tool.vendor}</small>
+                        <span className="vendor-text"> - {tool.vendor}</span>
                       </td>
                       <td><span className={`category-badge ${tool.category.toLowerCase().replace(/\s/g, '-')}`}>{tool.category}</span></td>
                       <td>${Number(tool.cost_monthly || 0).toFixed(2)}</td>

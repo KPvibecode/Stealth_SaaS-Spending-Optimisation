@@ -229,6 +229,12 @@ h1 {
   height: 56px;
 }
 
+.vendor-text {
+  color: #666;
+  font-weight: normal;
+  font-size: 0.875rem;
+}
+
 .tools-table th {
   background: #f8f9fa;
   font-weight: 600;

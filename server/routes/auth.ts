@@ -46,7 +46,8 @@ router.get('/microsoft/status', async (req, res) => {
       res.json({
         connected: true,
         lastSync: source.last_sync_at,
-        tenantId: source.tenant_id
+        tenantId: source.tenant_id,
+        accountName: source.name
       });
     } else {
       res.json({ connected: false });

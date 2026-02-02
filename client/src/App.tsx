@@ -60,6 +60,7 @@ function App() {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [microsoftConnected, setMicrosoftConnected] = useState(false);
+  const [microsoftAccount, setMicrosoftAccount] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
 
@@ -184,6 +185,9 @@ function App() {
       const res = await fetch('/api/auth/microsoft/status', { credentials: 'include' });
       const data = await res.json();
       setMicrosoftConnected(data.connected);
+      if (data.accountName) {
+        setMicrosoftAccount(data.accountName);
+      }
     } catch (error) {
       console.error('Failed to check Microsoft status:', error);
     }
@@ -538,6 +542,9 @@ function App() {
                 {microsoftConnected ? (
                   <div className="connected-status">
                     <span className="status-badge connected">Connected</span>
+                    {microsoftAccount && (
+                      <p className="connected-account">{microsoftAccount}</p>
+                    )}
                     <button onClick={syncMicrosoftApps} className="btn primary">
                       Sync Apps Now
                     </button>

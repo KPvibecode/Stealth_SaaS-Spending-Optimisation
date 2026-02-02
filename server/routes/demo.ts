@@ -59,6 +59,11 @@ router.post('/seed', async (req, res) => {
       return res.json({ success: true, message: 'Demo data already exists' });
     }
 
+    await db.query(
+      `INSERT INTO data_sources (type, name, status, tenant_id)
+       VALUES ('microsoft_entra', 'Acme Corp (demo@acmecorp.com)', 'connected', 'demo-tenant-id')`
+    );
+
     for (const dept of mockDepartments) {
       await db.query(
         'INSERT INTO departments (name, team_lead_email, team_lead_name) VALUES ($1, $2, $3)',

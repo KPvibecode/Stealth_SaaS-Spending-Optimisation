@@ -254,6 +254,12 @@ h1 {
   background: #e9ecef;
 }
 
+.connected-account {
+  margin: 0.5rem 0;
+  font-size: 0.875rem;
+  color: #666;
+}
+
 .tools-table select {
   padding: 0.5rem;
   border: 1px solid #ddd;

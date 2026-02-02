@@ -20,6 +20,7 @@ A SaaS spend management tool designed to detect spend risk early, route decision
 │   └── routes/
 │       ├── auth.ts        # Microsoft Entra OAuth for data source connections
 │       ├── userAuth.ts    # User login/logout with Microsoft Entra OAuth
+│       ├── demo.ts        # Demo mode with mock data seeding
 │       ├── graph.ts       # Microsoft Graph API for syncing enterprise apps
 │       ├── upload.ts      # CSV upload for Amex transactions
 │       ├── tools.ts       # Detected SaaS tools CRUD and deduplication
@@ -80,6 +81,10 @@ A SaaS spend management tool designed to detect spend risk early, route decision
 - `GET /api/user/callback` - OAuth callback for user login
 - `POST /api/user/logout` - Logout and clear session
 
+### Demo Mode
+- `POST /api/demo/seed` - Seed database with 5 departments and 20 SaaS tools
+- `POST /api/demo/login` - Login as demo user (no Microsoft credentials needed)
+
 ### Data Source Authentication
 - `GET /api/auth/microsoft/status` - Check Microsoft connection status
 - `GET /api/auth/microsoft/login` - Initiate Microsoft OAuth for data sync
@@ -112,6 +117,10 @@ A SaaS spend management tool designed to detect spend risk early, route decision
 - `MICROSOFT_TENANT_ID` - Azure AD tenant ID (optional, defaults to 'common')
 
 ## Recent Changes
+- 2026-02-02: Added demo mode for testing without Microsoft credentials
+  - "Try Demo Mode" button on login page
+  - Seeds 5 departments and 20 sample SaaS tools
+  - Creates demo user session automatically
 - 2026-02-02: Added user login with Microsoft Entra ID
   - Users table and sessions table for authentication
   - Microsoft OAuth login flow with cookie-based sessions

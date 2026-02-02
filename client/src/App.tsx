@@ -88,6 +88,20 @@ function App() {
     }
   }
 
+  async function enterDemoMode() {
+    try {
+      await fetch('/api/demo/seed', { method: 'POST', credentials: 'include' });
+      const res = await fetch('/api/demo/login', { method: 'POST', credentials: 'include' });
+      const data = await res.json();
+      if (data.success) {
+        setUser({ id: 0, email: data.user.email, name: data.user.name });
+      }
+    } catch (error) {
+      console.error('Demo mode failed:', error);
+      setMessage({ type: 'error', text: 'Failed to enter demo mode' });
+    }
+  }
+
   async function loadData() {
     setLoading(true);
     try {
@@ -245,6 +259,13 @@ function App() {
           <a href="/api/user/login" className="btn primary login-btn">
             Sign in with Microsoft
           </a>
+          <div className="divider">
+            <span>or</span>
+          </div>
+          <button onClick={enterDemoMode} className="btn secondary demo-btn">
+            Try Demo Mode
+          </button>
+          <p className="demo-note">No login required. Explore with sample data.</p>
         </div>
       </div>
     );

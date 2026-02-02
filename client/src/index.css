@@ -243,8 +243,15 @@ h1 {
 .tools-table th {
   background: #f8f9fa;
   font-weight: 600;
-  color: #666;
-  font-size: 0.875rem;
+  user-select: none;
+}
+
+.tools-table th.sortable {
+  cursor: pointer;
+}
+
+.tools-table th.sortable:hover {
+  background: #e9ecef;
 }
 
 .tools-table select {

@@ -64,6 +64,55 @@ function App() {
   const [authChecked, setAuthChecked] = useState(false);
 
   const [newDept, setNewDept] = useState({ name: '', team_lead_email: '', team_lead_name: '' });
+  const [sortColumn, setSortColumn] = useState<string>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  function handleSort(column: string) {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  }
+
+  function getSortedTools() {
+    return [...tools].sort((a, b) => {
+      let aVal: any, bVal: any;
+      switch (sortColumn) {
+        case 'name':
+          aVal = a.name.toLowerCase();
+          bVal = b.name.toLowerCase();
+          break;
+        case 'category':
+          aVal = a.category.toLowerCase();
+          bVal = b.category.toLowerCase();
+          break;
+        case 'cost':
+          aVal = Number(a.cost_monthly) || 0;
+          bVal = Number(b.cost_monthly) || 0;
+          break;
+        case 'source':
+          aVal = a.source_type;
+          bVal = b.source_type;
+          break;
+        case 'department':
+          aVal = (a.department_name || '').toLowerCase();
+          bVal = (b.department_name || '').toLowerCase();
+          break;
+        case 'teamLead':
+          aVal = (a.team_lead_name || '').toLowerCase();
+          bVal = (b.team_lead_name || '').toLowerCase();
+          break;
+        default:
+          aVal = a.name.toLowerCase();
+          bVal = b.name.toLowerCase();
+      }
+      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
 
   useEffect(() => {
     checkAuth();
@@ -380,16 +429,28 @@ function App() {
               <table className="tools-table">
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Category</th>
-                    <th>Monthly Cost</th>
-                    <th>Source</th>
-                    <th>Department</th>
-                    <th>Team Lead</th>
+                    <th className="sortable" onClick={() => handleSort('name')}>
+                      Name {sortColumn === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th className="sortable" onClick={() => handleSort('category')}>
+                      Category {sortColumn === 'category' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th className="sortable" onClick={() => handleSort('cost')}>
+                      Monthly Cost {sortColumn === 'cost' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th className="sortable" onClick={() => handleSort('source')}>
+                      Source {sortColumn === 'source' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th className="sortable" onClick={() => handleSort('department')}>
+                      Department {sortColumn === 'department' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th className="sortable" onClick={() => handleSort('teamLead')}>
+                      Team Lead {sortColumn === 'teamLead' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {tools.map(tool => (
+                  {getSortedTools().map(tool => (
                     <tr key={tool.id}>
                       <td>
                         <strong>{tool.name}</strong>

@@ -1,23 +1,31 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { db } from './db/index.js';
 import authRoutes from './routes/auth.js';
 import graphRoutes from './routes/graph.js';
 import uploadRoutes from './routes/upload.js';
 import toolsRoutes from './routes/tools.js';
 import departmentsRoutes from './routes/departments.js';
+import userAuthRoutes, { authMiddleware } from './routes/userAuth.js';
 
 const app = express();
 const PORT = 3001;
 
-app.use(cors());
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
 app.use(express.json());
+app.use(cookieParser());
+app.use(authMiddleware as any);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/user', userAuthRoutes);
 app.use('/api/graph', graphRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/tools', toolsRoutes);

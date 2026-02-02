@@ -33,6 +33,12 @@ interface Stats {
   bySource: { source_type: string; count: number }[];
 }
 
+interface User {
+  id: number;
+  email: string;
+  name: string;
+}
+
 type TabType = 'dashboard' | 'tools' | 'departments' | 'connect';
 
 function App() {
@@ -44,13 +50,43 @@ function App() {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [microsoftConnected, setMicrosoftConnected] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
   const [newDept, setNewDept] = useState({ name: '', team_lead_email: '', team_lead_name: '' });
 
   useEffect(() => {
-    loadData();
-    checkMicrosoftStatus();
+    checkAuth();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      loadData();
+      checkMicrosoftStatus();
+    }
+  }, [user]);
+
+  async function checkAuth() {
+    try {
+      const res = await fetch('/api/user/me', { credentials: 'include' });
+      const data = await res.json();
+      if (data.authenticated) {
+        setUser(data.user);
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error);
+    }
+    setAuthChecked(true);
+  }
+
+  async function handleLogout() {
+    try {
+      await fetch('/api/user/logout', { method: 'POST', credentials: 'include' });
+      setUser(null);
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  }
 
   async function loadData() {
     setLoading(true);
@@ -186,6 +222,31 @@ function App() {
     }
   }
 
+  if (!authChecked) {
+    return (
+      <div className="login-page">
+        <div className="login-card">
+          <h1>SaaS Manager</h1>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="login-page">
+        <div className="login-card">
+          <h1>SaaS Manager</h1>
+          <p>Manage your SaaS subscriptions, detect spend risks, and make renewal decisions before billing.</p>
+          <a href="/api/user/login" className="btn primary login-btn">
+            Sign in with Microsoft
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="app">
       <nav className="sidebar">
@@ -206,6 +267,13 @@ function App() {
             Connect Data
           </li>
         </ul>
+        <div className="user-menu">
+          <div className="user-info">
+            <span className="user-name">{user.name}</span>
+            <span className="user-email">{user.email}</span>
+          </div>
+          <button onClick={handleLogout} className="btn logout-btn">Logout</button>
+        </div>
       </nav>
 
       <main className="content">

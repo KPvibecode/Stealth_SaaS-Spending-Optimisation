@@ -94,6 +94,27 @@ export async function initDatabase() {
 
     CREATE INDEX IF NOT EXISTS idx_detected_tools_normalized_name ON detected_tools(normalized_name);
     CREATE INDEX IF NOT EXISTS idx_transactions_vendor_normalized ON transactions(vendor_normalized);
+
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      microsoft_id VARCHAR(255) UNIQUE NOT NULL,
+      email VARCHAR(255) NOT NULL,
+      name VARCHAR(255),
+      tenant_id VARCHAR(255),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      last_login_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS sessions (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      token VARCHAR(255) UNIQUE NOT NULL,
+      expires_at TIMESTAMP NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
+    CREATE INDEX IF NOT EXISTS idx_users_microsoft_id ON users(microsoft_id);
   `);
   console.log('Database initialized');
 }

@@ -541,10 +541,12 @@ function App() {
                 <p>Sync enterprise applications from your Microsoft 365 tenant.</p>
                 {microsoftConnected ? (
                   <div className="connected-status">
-                    <span className="status-badge connected">Connected</span>
-                    {microsoftAccount && (
-                      <p className="connected-account">{microsoftAccount}</p>
-                    )}
+                    <div className="connected-info">
+                      <span className="status-badge connected">Connected</span>
+                      {microsoftAccount && (
+                        <span className="connected-account">{microsoftAccount}</span>
+                      )}
+                    </div>
                     <button onClick={syncMicrosoftApps} className="btn primary">
                       Sync Apps Now
                     </button>

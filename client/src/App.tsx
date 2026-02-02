@@ -20,6 +20,7 @@ interface DetectedTool {
   billing_cadence: string;
   department_name: string | null;
   assigned_team_lead: string | null;
+  team_lead_name: string | null;
   status: string;
 }
 
@@ -411,7 +412,13 @@ function App() {
                           ))}
                         </select>
                       </td>
-                      <td>{tool.assigned_team_lead || '-'}</td>
+                      <td>
+                        {tool.team_lead_name ? (
+                          <span className="team-lead-name" title={tool.assigned_team_lead || ''}>
+                            {tool.team_lead_name}
+                          </span>
+                        ) : '-'}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

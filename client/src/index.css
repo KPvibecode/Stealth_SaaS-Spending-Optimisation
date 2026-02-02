@@ -235,6 +235,11 @@ h1 {
   font-size: 0.875rem;
 }
 
+.team-lead-name {
+  cursor: help;
+  border-bottom: 1px dotted #999;
+}
+
 .tools-table th {
   background: #f8f9fa;
   font-weight: 600;

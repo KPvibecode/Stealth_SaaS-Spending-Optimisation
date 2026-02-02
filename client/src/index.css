@@ -221,6 +221,12 @@ h1 {
   padding: 1rem;
   text-align: left;
   border-bottom: 1px solid #eee;
+  height: 56px;
+  vertical-align: middle;
+}
+
+.tools-table tr {
+  height: 56px;
 }
 
 .tools-table th {

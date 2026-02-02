@@ -123,11 +123,11 @@ router.get('/callback', async (req, res) => {
   const { code, error } = req.query;
 
   if (error) {
-    return res.redirect('/login?error=' + encodeURIComponent(error as string));
+    return res.redirect('/?error=' + encodeURIComponent(error as string));
   }
 
   if (!code || !client) {
-    return res.redirect('/login?error=missing_code');
+    return res.redirect('/?error=missing_code');
   }
 
   try {
@@ -139,7 +139,7 @@ router.get('/callback', async (req, res) => {
 
     const account = tokenResponse.account;
     if (!account) {
-      return res.redirect('/login?error=no_account');
+      return res.redirect('/?error=no_account');
     }
 
     const microsoftId = account.localAccountId || account.homeAccountId;
@@ -188,7 +188,7 @@ router.get('/callback', async (req, res) => {
     res.redirect('/?login=success');
   } catch (error) {
     console.error('Callback error:', error);
-    res.redirect('/login?error=auth_failed');
+    res.redirect('/?error=auth_failed');
   }
 });
 

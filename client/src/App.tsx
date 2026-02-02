@@ -92,9 +92,9 @@ function App() {
     setLoading(true);
     try {
       const [toolsRes, statsRes, deptsRes] = await Promise.all([
-        fetch('/api/tools'),
-        fetch('/api/tools/stats'),
-        fetch('/api/departments')
+        fetch('/api/tools', { credentials: 'include' }),
+        fetch('/api/tools/stats', { credentials: 'include' }),
+        fetch('/api/departments', { credentials: 'include' })
       ]);
       
       setTools(await toolsRes.json());
@@ -108,7 +108,7 @@ function App() {
 
   async function checkMicrosoftStatus() {
     try {
-      const res = await fetch('/api/auth/microsoft/status');
+      const res = await fetch('/api/auth/microsoft/status', { credentials: 'include' });
       const data = await res.json();
       setMicrosoftConnected(data.connected);
     } catch (error) {
@@ -129,7 +129,8 @@ function App() {
     try {
       const res = await fetch('/api/upload/csv', {
         method: 'POST',
-        body: formData
+        body: formData,
+        credentials: 'include'
       });
       const data = await res.json();
 
@@ -148,7 +149,7 @@ function App() {
 
   async function runDeduplication() {
     try {
-      const res = await fetch('/api/tools/deduplicate', { method: 'POST' });
+      const res = await fetch('/api/tools/deduplicate', { method: 'POST', credentials: 'include' });
       const data = await res.json();
       setMessage({ type: 'success', text: `Found and merged ${data.duplicatesFound} duplicate tools` });
       loadData();
@@ -159,7 +160,7 @@ function App() {
 
   async function autoAssignTools() {
     try {
-      const res = await fetch('/api/departments/auto-assign', { method: 'POST' });
+      const res = await fetch('/api/departments/auto-assign', { method: 'POST', credentials: 'include' });
       const data = await res.json();
       if (data.success) {
         setMessage({ type: 'success', text: data.message });
@@ -174,7 +175,7 @@ function App() {
 
   async function syncMicrosoftApps() {
     try {
-      const res = await fetch('/api/graph/sync-enterprise-apps', { method: 'POST' });
+      const res = await fetch('/api/graph/sync-enterprise-apps', { method: 'POST', credentials: 'include' });
       const data = await res.json();
       if (data.success) {
         setMessage({ type: 'success', text: data.message });
@@ -195,7 +196,8 @@ function App() {
       const res = await fetch('/api/departments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newDept)
+        body: JSON.stringify(newDept),
+        credentials: 'include'
       });
       const data = await res.json();
       
@@ -214,7 +216,8 @@ function App() {
       await fetch(`/api/tools/${toolId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ department_id: departmentId })
+        body: JSON.stringify({ department_id: departmentId }),
+        credentials: 'include'
       });
       loadData();
     } catch (error) {

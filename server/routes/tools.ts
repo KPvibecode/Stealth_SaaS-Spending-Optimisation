@@ -1,8 +1,11 @@
 import { Router } from 'express';
 import Fuse from 'fuse.js';
 import { db } from '../db/index.js';
+import { requireAuth } from './userAuth.js';
 
 const router = Router();
+
+router.use(requireAuth as any);
 
 router.get('/', async (req, res) => {
   try {

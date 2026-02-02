@@ -3,8 +3,11 @@ import multer from 'multer';
 import { parse } from 'csv-parse';
 import { Readable } from 'stream';
 import { db } from '../db/index.js';
+import { requireAuth } from './userAuth.js';
 
 const router = Router();
+
+router.use(requireAuth as any);
 
 const upload = multer({ 
   storage: multer.memoryStorage(),

@@ -18,7 +18,8 @@ A SaaS spend management tool designed to detect spend risk early, route decision
 │   ├── db/
 │   │   └── index.ts       # PostgreSQL database connection & schema
 │   └── routes/
-│       ├── auth.ts        # Microsoft Entra OAuth authentication
+│       ├── auth.ts        # Microsoft Entra OAuth for data source connections
+│       ├── userAuth.ts    # User login/logout with Microsoft Entra OAuth
 │       ├── graph.ts       # Microsoft Graph API for syncing enterprise apps
 │       ├── upload.ts      # CSV upload for Amex transactions
 │       ├── tools.ts       # Detected SaaS tools CRUD and deduplication
@@ -62,16 +63,28 @@ A SaaS spend management tool designed to detect spend risk early, route decision
 - id, data_source_id, transaction_date, description, amount
 - vendor_raw, vendor_normalized, detected_tool_id
 
+### users
+- id, microsoft_id, email, name, tenant_id, created_at, last_login_at
+
+### sessions
+- id, user_id, token, expires_at, created_at
+
 ### subscriptions & decisions
 - For future decision workflow implementation
 
 ## API Endpoints
 
-### Authentication
+### User Authentication
+- `GET /api/user/me` - Get current user (if authenticated)
+- `GET /api/user/login` - Initiate Microsoft Entra login
+- `GET /api/user/callback` - OAuth callback for user login
+- `POST /api/user/logout` - Logout and clear session
+
+### Data Source Authentication
 - `GET /api/auth/microsoft/status` - Check Microsoft connection status
-- `GET /api/auth/microsoft/login` - Initiate Microsoft OAuth
-- `GET /api/auth/microsoft/callback` - OAuth callback
-- `POST /api/auth/microsoft/disconnect` - Disconnect Microsoft
+- `GET /api/auth/microsoft/login` - Initiate Microsoft OAuth for data sync
+- `GET /api/auth/microsoft/callback` - OAuth callback for data source
+- `POST /api/auth/microsoft/disconnect` - Disconnect Microsoft data source
 
 ### Data Sources
 - `POST /api/graph/sync-enterprise-apps` - Sync apps from Microsoft Entra
@@ -99,8 +112,14 @@ A SaaS spend management tool designed to detect spend risk early, route decision
 - `MICROSOFT_TENANT_ID` - Azure AD tenant ID (optional, defaults to 'common')
 
 ## Recent Changes
+- 2026-02-02: Added user login with Microsoft Entra ID
+  - Users table and sessions table for authentication
+  - Microsoft OAuth login flow with cookie-based sessions
+  - Login page UI with "Sign in with Microsoft" button
+  - User menu in sidebar with logout functionality
+  - Protected routes require authentication
 - 2026-02-02: Built SaaS Discovery & Inventory feature
-  - Microsoft Entra OAuth integration
+  - Microsoft Entra OAuth integration for data sync
   - Amex CSV upload with transaction parsing
   - SaaS detection and categorization
   - Fuzzy deduplication with Fuse.js

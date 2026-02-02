@@ -1,7 +1,10 @@
 import { Router } from 'express';
 import { db } from '../db/index.js';
+import { requireAuth } from './userAuth.js';
 
 const router = Router();
+
+router.use(requireAuth as any);
 
 router.get('/', async (req, res) => {
   try {

@@ -255,7 +255,8 @@ h1 {
 }
 
 .connected-account {
-  margin: 0.5rem 0;
+  width: 100%;
+  margin: 0;
   font-size: 0.875rem;
   color: #666;
 }
@@ -378,8 +379,9 @@ h1 {
 
 .connected-status {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem 1rem;
 }
 
 .status-badge {

@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react';
 import './index.css';
 
+function formatSpend(amount: number): string {
+  if (amount >= 1000000) {
+    return `$${Math.round(amount / 1000) / 1000}M`;
+  } else if (amount >= 1000) {
+    return `$${Math.round(amount / 1000)}K`;
+  }
+  return `$${Math.round(amount)}`;
+}
+
 interface DetectedTool {
   id: number;
   name: string;
@@ -319,7 +328,7 @@ function App() {
               </div>
               <div className="stat-card">
                 <h3>Monthly Spend</h3>
-                <span className="stat-value">${Number(stats?.total_monthly_spend || 0).toFixed(2)}</span>
+                <span className="stat-value">{formatSpend(Number(stats?.total_monthly_spend || 0))}</span>
               </div>
               <div className="stat-card">
                 <h3>Unassigned</h3>

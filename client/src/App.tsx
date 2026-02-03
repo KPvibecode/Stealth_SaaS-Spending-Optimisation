@@ -78,6 +78,7 @@ function App() {
   }
 
   function getSortedTools() {
+    if (!Array.isArray(tools)) return [];
     return [...tools].sort((a, b) => {
       let aVal: any, bVal: any;
       switch (sortColumn) {
@@ -171,9 +172,17 @@ function App() {
         fetch('/api/departments', { credentials: 'include' })
       ]);
       
-      setTools(await toolsRes.json());
-      setStats(await statsRes.json());
-      setDepartments(await deptsRes.json());
+      if (toolsRes.ok) {
+        const toolsData = await toolsRes.json();
+        setTools(Array.isArray(toolsData) ? toolsData : []);
+      }
+      if (statsRes.ok) {
+        setStats(await statsRes.json());
+      }
+      if (deptsRes.ok) {
+        const deptsData = await deptsRes.json();
+        setDepartments(Array.isArray(deptsData) ? deptsData : []);
+      }
     } catch (error) {
       console.error('Failed to load data:', error);
     }
@@ -463,12 +472,12 @@ function App() {
                         <select 
                           value={tool.department_name || ''} 
                           onChange={(e) => {
-                            const dept = departments.find(d => d.name === e.target.value);
+                            const dept = (departments || []).find(d => d.name === e.target.value);
                             assignToolToDepartment(tool.id, dept?.id || null);
                           }}
                         >
                           <option value="">Unassigned</option>
-                          {departments.map(d => (
+                          {(departments || []).map(d => (
                             <option key={d.id} value={d.name}>{d.name}</option>
                           ))}
                         </select>
@@ -516,7 +525,7 @@ function App() {
             </form>
 
             <div className="departments-list">
-              {departments.map(dept => (
+              {(departments || []).map(dept => (
                 <div key={dept.id} className="department-card">
                   <h3>{dept.name}</h3>
                   <p className="lead">Team Lead: {dept.team_lead_name || 'Not assigned'}</p>

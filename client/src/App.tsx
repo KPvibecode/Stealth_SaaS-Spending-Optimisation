@@ -406,7 +406,7 @@ function App() {
             <div className="category-breakdown">
               <h2>Spend by Category</h2>
               <div className="category-list">
-                {stats?.byCategory.map(cat => (
+                {(stats?.byCategory || []).map(cat => (
                   <div key={cat.category} className="category-item">
                     <span className="category-name">{cat.category}</span>
                     <span className="category-count">{cat.count} tools</span>

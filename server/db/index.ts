@@ -84,16 +84,22 @@ export async function initDatabase() {
 
     CREATE TABLE IF NOT EXISTS decisions (
       id SERIAL PRIMARY KEY,
-      subscription_id INTEGER REFERENCES subscriptions(id),
-      decision_type VARCHAR(50) NOT NULL,
-      decided_by VARCHAR(255),
-      decision_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      tool_id INTEGER REFERENCES detected_tools(id) ON DELETE CASCADE,
+      decision_type VARCHAR(50) NOT NULL DEFAULT 'pending',
+      status VARCHAR(50) NOT NULL DEFAULT 'pending',
+      decided_by_email VARCHAR(255),
+      decided_by_name VARCHAR(255),
+      due_date DATE,
+      decision_date TIMESTAMP,
       notes TEXT,
-      status VARCHAR(50) DEFAULT 'pending'
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE INDEX IF NOT EXISTS idx_detected_tools_normalized_name ON detected_tools(normalized_name);
     CREATE INDEX IF NOT EXISTS idx_transactions_vendor_normalized ON transactions(vendor_normalized);
+    CREATE INDEX IF NOT EXISTS idx_decisions_tool_id ON decisions(tool_id);
+    CREATE INDEX IF NOT EXISTS idx_decisions_status ON decisions(status);
 
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,

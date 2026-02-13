@@ -22,6 +22,38 @@ interface DetectedTool {
   assigned_team_lead: string | null;
   team_lead_name: string | null;
   status: string;
+  renewal_date: string | null;
+}
+
+interface DecisionTool {
+  id: number;
+  name: string;
+  vendor: string;
+  category: string;
+  cost_monthly: number;
+  renewal_date: string | null;
+  department_name: string | null;
+  team_lead_name: string | null;
+  team_lead_email: string | null;
+  risk_score: number;
+  risk_level: string;
+  decision_id: number | null;
+  decision_type: string | null;
+  decision_status: string | null;
+  decided_by_name: string | null;
+  decision_date: string | null;
+  decision_notes: string | null;
+}
+
+interface DecisionStats {
+  total: number;
+  pending: number;
+  approved: number;
+  cancelled: number;
+  under_review: number;
+  high_risk: number;
+  overdue: number;
+  completion_rate: number;
 }
 
 interface Department {
@@ -49,7 +81,7 @@ interface User {
   name: string;
 }
 
-type TabType = 'dashboard' | 'tools' | 'departments' | 'connect';
+type TabType = 'dashboard' | 'tools' | 'decisions' | 'departments' | 'connect';
 
 function App() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
@@ -63,6 +95,9 @@ function App() {
   const [microsoftAccount, setMicrosoftAccount] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [decisionTools, setDecisionTools] = useState<DecisionTool[]>([]);
+  const [decisionStats, setDecisionStats] = useState<DecisionStats | null>(null);
+  const [decisionFilter, setDecisionFilter] = useState<string>('all');
 
   const [newDept, setNewDept] = useState({ name: '', team_lead_email: '', team_lead_name: '' });
   const [sortColumn, setSortColumn] = useState<string>('name');
@@ -123,6 +158,7 @@ function App() {
   useEffect(() => {
     if (user) {
       loadData();
+      loadDecisions();
       checkMicrosoftStatus();
     }
   }, [user]);
@@ -200,6 +236,62 @@ function App() {
     } catch (error) {
       console.error('Failed to check Microsoft status:', error);
     }
+  }
+
+  async function loadDecisions() {
+    try {
+      const [toolsRes, statsRes] = await Promise.all([
+        fetch('/api/decisions', { credentials: 'include' }),
+        fetch('/api/decisions/stats', { credentials: 'include' })
+      ]);
+      if (toolsRes.ok) {
+        const data = await toolsRes.json();
+        setDecisionTools(Array.isArray(data) ? data : []);
+      }
+      if (statsRes.ok) {
+        setDecisionStats(await statsRes.json());
+      }
+    } catch (error) {
+      console.error('Failed to load decisions:', error);
+    }
+  }
+
+  async function makeDecision(toolId: number, decisionType: string, notes?: string) {
+    try {
+      const res = await fetch(`/api/decisions/${toolId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ decision_type: decisionType, notes }),
+        credentials: 'include'
+      });
+      if (res.ok) {
+        setMessage({ type: 'success', text: `Decision recorded: ${decisionType}` });
+        loadDecisions();
+      } else {
+        const data = await res.json();
+        setMessage({ type: 'error', text: data.error || 'Failed to record decision' });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Failed to record decision' });
+    }
+  }
+
+  function getDaysUntilRenewal(date: string | null): number | null {
+    if (!date) return null;
+    return Math.ceil((new Date(date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  }
+
+  function formatDate(date: string | null): string {
+    if (!date) return 'Not set';
+    return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function getFilteredDecisions(): DecisionTool[] {
+    if (!Array.isArray(decisionTools)) return [];
+    if (decisionFilter === 'all') return decisionTools;
+    if (decisionFilter === 'pending') return decisionTools.filter(t => !t.decision_status || t.decision_status === 'pending');
+    if (decisionFilter === 'high_risk') return decisionTools.filter(t => t.risk_score >= 50);
+    return decisionTools.filter(t => t.decision_status === decisionFilter);
   }
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -353,6 +445,12 @@ function App() {
           <li className={activeTab === 'dashboard' ? 'active' : ''} onClick={() => setActiveTab('dashboard')}>
             Dashboard
           </li>
+          <li className={activeTab === 'decisions' ? 'active' : ''} onClick={() => setActiveTab('decisions')}>
+            Decisions
+            {decisionStats && decisionStats.pending > 0 && (
+              <span className="nav-badge">{decisionStats.pending}</span>
+            )}
+          </li>
           <li className={activeTab === 'tools' ? 'active' : ''} onClick={() => setActiveTab('tools')}>
             Discovered Tools
           </li>
@@ -382,24 +480,102 @@ function App() {
 
         {activeTab === 'dashboard' && (
           <div className="dashboard">
-            <h1>SaaS Inventory Dashboard</h1>
+            <h1>SaaS Spend Dashboard</h1>
             
             <div className="stats-grid">
-              <div className="stat-card">
-                <h3>Total Tools</h3>
-                <span className="stat-value">{stats?.total_tools || 0}</span>
-              </div>
               <div className="stat-card">
                 <h3>Monthly Spend</h3>
                 <span className="stat-value">{formatSpend(Number(stats?.total_monthly_spend || 0))}</span>
               </div>
-              <div className="stat-card">
-                <h3>Unassigned</h3>
-                <span className="stat-value warning">{stats?.unassigned || 0}</span>
+              <div className="stat-card clickable" onClick={() => setActiveTab('decisions')}>
+                <h3>Decisions Pending</h3>
+                <span className="stat-value warning">{decisionStats?.pending || 0}</span>
+              </div>
+              <div className="stat-card clickable" onClick={() => { setDecisionFilter('high_risk'); setActiveTab('decisions'); }}>
+                <h3>High Risk</h3>
+                <span className="stat-value danger">{decisionStats?.high_risk || 0}</span>
               </div>
               <div className="stat-card">
-                <h3>Categories</h3>
-                <span className="stat-value">{stats?.categories || 0}</span>
+                <h3>Completion Rate</h3>
+                <span className={`stat-value ${(decisionStats?.completion_rate || 0) >= 80 ? 'success' : 'warning'}`}>
+                  {decisionStats?.completion_rate || 0}%
+                </span>
+              </div>
+            </div>
+
+            <div className="dashboard-row">
+              <div className="dashboard-section">
+                <h2>Decision Summary</h2>
+                <div className="decision-summary">
+                  <div className="summary-item">
+                    <span className="summary-label">Total Tools</span>
+                    <span className="summary-value">{decisionStats?.total || 0}</span>
+                  </div>
+                  <div className="summary-item">
+                    <span className="summary-label">Approved</span>
+                    <span className="summary-value success">{decisionStats?.approved || 0}</span>
+                  </div>
+                  <div className="summary-item">
+                    <span className="summary-label">Cancelled</span>
+                    <span className="summary-value">{decisionStats?.cancelled || 0}</span>
+                  </div>
+                  <div className="summary-item">
+                    <span className="summary-label">Under Review</span>
+                    <span className="summary-value">{decisionStats?.under_review || 0}</span>
+                  </div>
+                  <div className="summary-item">
+                    <span className="summary-label">Overdue</span>
+                    <span className="summary-value danger">{decisionStats?.overdue || 0}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="dashboard-section">
+                <h2>Spend by Category</h2>
+                <div className="category-list">
+                  {(stats?.byCategory || []).map(cat => (
+                    <div key={cat.category} className="category-item">
+                      <span className="category-name">{cat.category}</span>
+                      <span className="category-count">{cat.count} tools</span>
+                      <span className="category-spend">{formatSpend(Number(cat.spend))}/mo</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="dashboard-section">
+              <h2>Urgent Decisions</h2>
+              <p className="section-subtitle">Tools needing attention soon</p>
+              <div className="urgent-list">
+                {(decisionTools || [])
+                  .filter(t => !t.decision_status || t.decision_status === 'pending' || t.decision_status === 'under_review')
+                  .slice(0, 5)
+                  .map(tool => {
+                    const days = getDaysUntilRenewal(tool.renewal_date);
+                    return (
+                      <div key={tool.id} className="urgent-item">
+                        <div className="urgent-info">
+                          <span className="urgent-name">{tool.name}</span>
+                          <span className="urgent-vendor">{tool.vendor}</span>
+                        </div>
+                        <div className="urgent-meta">
+                          <span className={`risk-badge ${tool.risk_level}`}>{tool.risk_level}</span>
+                          <span className="urgent-cost">{formatSpend(Number(tool.cost_monthly))}/mo</span>
+                          <span className={`urgent-days ${days !== null && days <= 7 ? 'danger' : ''}`}>
+                            {days !== null ? (days <= 0 ? 'Overdue' : `${days}d left`) : 'No date'}
+                          </span>
+                        </div>
+                        <div className="urgent-actions">
+                          <button className="btn small success" onClick={() => makeDecision(tool.id, 'approved')}>Renew</button>
+                          <button className="btn small danger" onClick={() => makeDecision(tool.id, 'cancelled')}>Cancel</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                {(decisionTools || []).filter(t => !t.decision_status || t.decision_status === 'pending' || t.decision_status === 'under_review').length === 0 && (
+                  <p className="empty-text">All decisions are up to date!</p>
+                )}
               </div>
             </div>
 
@@ -411,18 +587,122 @@ function App() {
                 Auto-Assign to Departments
               </button>
             </div>
+          </div>
+        )}
 
-            <div className="category-breakdown">
-              <h2>Spend by Category</h2>
-              <div className="category-list">
-                {(stats?.byCategory || []).map(cat => (
-                  <div key={cat.category} className="category-item">
-                    <span className="category-name">{cat.category}</span>
-                    <span className="category-count">{cat.count} tools</span>
-                    <span className="category-spend">${Number(cat.spend).toFixed(2)}/mo</span>
+        {activeTab === 'decisions' && (
+          <div className="decisions-page">
+            <h1>Renewal Decisions</h1>
+            <p className="page-subtitle">Review and decide on tool renewals before billing dates. Sorted by risk score.</p>
+
+            <div className="decision-filters">
+              <button className={`filter-btn ${decisionFilter === 'all' ? 'active' : ''}`} onClick={() => setDecisionFilter('all')}>
+                All ({decisionStats?.total || 0})
+              </button>
+              <button className={`filter-btn ${decisionFilter === 'pending' ? 'active' : ''}`} onClick={() => setDecisionFilter('pending')}>
+                Pending ({decisionStats?.pending || 0})
+              </button>
+              <button className={`filter-btn ${decisionFilter === 'high_risk' ? 'active' : ''}`} onClick={() => setDecisionFilter('high_risk')}>
+                High Risk ({decisionStats?.high_risk || 0})
+              </button>
+              <button className={`filter-btn ${decisionFilter === 'approved' ? 'active' : ''}`} onClick={() => setDecisionFilter('approved')}>
+                Approved ({decisionStats?.approved || 0})
+              </button>
+              <button className={`filter-btn ${decisionFilter === 'cancelled' ? 'active' : ''}`} onClick={() => setDecisionFilter('cancelled')}>
+                Cancelled ({decisionStats?.cancelled || 0})
+              </button>
+              <button className={`filter-btn ${decisionFilter === 'under_review' ? 'active' : ''}`} onClick={() => setDecisionFilter('under_review')}>
+                Under Review ({decisionStats?.under_review || 0})
+              </button>
+            </div>
+
+            <div className="decisions-list">
+              {getFilteredDecisions().map(tool => {
+                const days = getDaysUntilRenewal(tool.renewal_date);
+                const status = tool.decision_status || 'pending';
+                return (
+                  <div key={tool.id} className={`decision-card ${status}`}>
+                    <div className="decision-header">
+                      <div className="decision-tool-info">
+                        <h3>{tool.name}</h3>
+                        <span className="decision-vendor">{tool.vendor}</span>
+                      </div>
+                      <div className="risk-score-display">
+                        <div className={`risk-score-circle ${tool.risk_level}`}>
+                          {tool.risk_score}
+                        </div>
+                        <span className="risk-label">{tool.risk_level} risk</span>
+                      </div>
+                    </div>
+
+                    <div className="decision-details">
+                      <div className="detail-item">
+                        <span className="detail-label">Cost</span>
+                        <span className="detail-value">{formatSpend(Number(tool.cost_monthly))}/mo</span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-label">Renewal</span>
+                        <span className={`detail-value ${days !== null && days <= 7 ? 'danger' : ''}`}>
+                          {formatDate(tool.renewal_date)}
+                          {days !== null && (
+                            <span className="days-badge">
+                              {days <= 0 ? 'Overdue!' : `${days}d left`}
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-label">Department</span>
+                        <span className="detail-value">{tool.department_name || 'Unassigned'}</span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-label">Team Lead</span>
+                        <span className="detail-value">{tool.team_lead_name || 'None'}</span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-label">Category</span>
+                        <span className="detail-value">{tool.category}</span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-label">Status</span>
+                        <span className={`status-badge ${status}`}>{status.replace('_', ' ')}</span>
+                      </div>
+                    </div>
+
+                    {tool.decision_notes && (
+                      <div className="decision-notes">
+                        <span className="notes-label">Notes:</span> {tool.decision_notes}
+                        {tool.decided_by_name && <span className="decided-by"> - {tool.decided_by_name}</span>}
+                      </div>
+                    )}
+
+                    <div className="decision-actions">
+                      {status === 'pending' || status === 'under_review' ? (
+                        <>
+                          <button className="btn success" onClick={() => makeDecision(tool.id, 'approved', 'Renewed')}>
+                            Renew
+                          </button>
+                          <button className="btn warning" onClick={() => makeDecision(tool.id, 'under_review', 'Needs further evaluation')}>
+                            Review
+                          </button>
+                          <button className="btn danger" onClick={() => makeDecision(tool.id, 'cancelled', 'Not needed')}>
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button className="btn secondary" onClick={() => makeDecision(tool.id, 'pending')}>
+                          Reopen
+                        </button>
+                      )}
+                    </div>
                   </div>
-                ))}
-              </div>
+                );
+              })}
+              {getFilteredDecisions().length === 0 && (
+                <div className="empty-state">
+                  <p>No tools match this filter.</p>
+                </div>
+              )}
             </div>
           </div>
         )}

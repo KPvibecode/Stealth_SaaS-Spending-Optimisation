@@ -75,7 +75,12 @@ router.get('/', async (req, res) => {
         dec.decided_by_name,
         dec.due_date,
         dec.decision_date,
-        dec.notes as decision_notes
+        dec.notes as decision_notes,
+        notif.last_notified_at,
+        notif.last_notif_tier,
+        notif.notif_recipient,
+        email_act.email_action,
+        email_act.email_action_at
       FROM detected_tools dt
       LEFT JOIN departments d ON dt.department_id = d.id
       LEFT JOIN LATERAL (
@@ -84,6 +89,20 @@ router.get('/', async (req, res) => {
         ORDER BY created_at DESC 
         LIMIT 1
       ) dec ON true
+      LEFT JOIN LATERAL (
+        SELECT sent_at as last_notified_at, days_before_renewal as last_notif_tier, recipient_email as notif_recipient
+        FROM notification_logs
+        WHERE notification_logs.tool_id = dt.id
+        ORDER BY sent_at DESC
+        LIMIT 1
+      ) notif ON true
+      LEFT JOIN LATERAL (
+        SELECT action as email_action, used_at as email_action_at
+        FROM email_action_tokens
+        WHERE email_action_tokens.tool_id = dt.id AND email_action_tokens.used_at IS NOT NULL
+        ORDER BY used_at DESC
+        LIMIT 1
+      ) email_act ON true
       WHERE dt.is_duplicate = FALSE OR dt.is_duplicate IS NULL
       ORDER BY dt.renewal_date ASC NULLS LAST
     `);

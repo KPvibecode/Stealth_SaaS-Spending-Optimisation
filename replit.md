@@ -24,7 +24,9 @@ A SaaS spend management tool designed to detect spend risk early, route decision
 │       ├── graph.ts       # Microsoft Graph API for syncing enterprise apps
 │       ├── upload.ts      # CSV upload for Amex transactions
 │       ├── tools.ts       # Detected SaaS tools CRUD and deduplication
-│       └── departments.ts # Department management and auto-assignment
+│       ├── departments.ts # Department management and auto-assignment
+│       ├── decisions.ts   # Decision workflow with risk scoring
+│       └── notifications.ts # Email notifications with Resend + action tokens
 ├── shared/                 # Shared TypeScript types
 │   └── types.ts           # Subscription, Decision interfaces
 ├── package.json           # Project dependencies
@@ -110,13 +112,31 @@ A SaaS spend management tool designed to detect spend risk early, route decision
 - `DELETE /api/departments/:id` - Delete department
 - `POST /api/departments/auto-assign` - Auto-assign tools based on category
 
+### Decisions
+- `GET /api/decisions` - List all tools with risk scores and decision status
+- `GET /api/decisions/stats` - Decision workflow statistics
+- `POST /api/decisions/:toolId` - Create/update a decision (approved/cancelled/under_review/pending)
+
+### Notifications
+- `POST /api/notifications/check` - Trigger notification check (sends emails for tools at 30/15/7 day thresholds)
+- `GET /api/notifications/logs` - View notification history
+- `GET /api/notifications/action/:token` - Token-based action endpoint (used from email links, no auth required)
+
 ## Environment Variables Required
 - `DATABASE_URL` - PostgreSQL connection string (auto-set by Replit)
+- `RESEND_API_KEY` - Resend email service API key (for sending notifications)
 - `MICROSOFT_CLIENT_ID` - Azure AD app client ID
 - `MICROSOFT_CLIENT_SECRET` - Azure AD app client secret
 - `MICROSOFT_TENANT_ID` - Azure AD tenant ID (optional, defaults to 'common')
 
 ## Recent Changes
+- 2026-02-21: Email notification workflow
+  - Resend integration for sending HTML emails
+  - Reminder tiers at 30, 15, and 7 days before renewal
+  - Token-based action links in emails (approve/cancel/review without login)
+  - Idempotent - skips already-notified tools and already-decided tools
+  - notification_logs and email_action_tokens tables for tracking
+  - Confirmation page shown when action is taken from email
 - 2026-02-02: Added demo mode for testing without Microsoft credentials
   - "Try Demo Mode" button on login page
   - Seeds 5 departments and 20 sample SaaS tools

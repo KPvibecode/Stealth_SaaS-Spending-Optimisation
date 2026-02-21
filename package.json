@@ -23,7 +23,8 @@
     "fuse.js": "^7.1.0",
     "msal-node": "^0.0.1-security",
     "multer": "^2.0.2",
-    "pg": "^8.11.3"
+    "pg": "^8.11.3",
+    "resend": "^6.9.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

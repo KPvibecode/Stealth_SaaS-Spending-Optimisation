@@ -119,6 +119,29 @@ export async function initDatabase() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS notification_logs (
+      id SERIAL PRIMARY KEY,
+      tool_id INTEGER REFERENCES detected_tools(id) ON DELETE CASCADE,
+      notification_type VARCHAR(20) NOT NULL,
+      recipient_email VARCHAR(255) NOT NULL,
+      sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      days_before_renewal INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS email_action_tokens (
+      id SERIAL PRIMARY KEY,
+      token VARCHAR(255) UNIQUE NOT NULL,
+      tool_id INTEGER REFERENCES detected_tools(id) ON DELETE CASCADE,
+      action VARCHAR(50) NOT NULL,
+      recipient_email VARCHAR(255) NOT NULL,
+      expires_at TIMESTAMP NOT NULL,
+      used_at TIMESTAMP,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_notification_logs_tool_id ON notification_logs(tool_id);
+    CREATE INDEX IF NOT EXISTS idx_email_action_tokens_token ON email_action_tokens(token);
+
     CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
     CREATE INDEX IF NOT EXISTS idx_users_microsoft_id ON users(microsoft_id);
   `);

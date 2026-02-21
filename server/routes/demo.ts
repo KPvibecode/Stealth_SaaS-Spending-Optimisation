@@ -74,22 +74,51 @@ router.post('/seed', async (req, res) => {
     const deptResult = await db.query('SELECT id, name FROM departments');
     const deptMap = new Map(deptResult.rows.map((d: any) => [d.name, d.id]));
 
-    for (const tool of mockTools) {
+    const renewalOffsets = [
+      -3, 2, 5, 8, 12, 18, 25, 35, 45, 55,
+      65, 75, 80, 90, 14, 21, 7, 40, 60, 30
+    ];
+
+    const toolIds: number[] = [];
+    for (let i = 0; i < mockTools.length; i++) {
+      const tool = mockTools[i];
       const deptName = categoryToDepartment[tool.category] || 'Engineering';
       const deptId = deptMap.get(deptName);
       const renewalDate = new Date();
-      renewalDate.setDate(renewalDate.getDate() + Math.floor(Math.random() * 90) + 10);
+      renewalDate.setDate(renewalDate.getDate() + renewalOffsets[i]);
 
-      await db.query(
+      const result = await db.query(
         `INSERT INTO detected_tools 
          (name, vendor, normalized_name, category, source_type, cost_monthly, billing_cadence, department_id, renewal_date, status)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active')`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active')
+         RETURNING id`,
         [tool.name, tool.vendor, tool.name.toLowerCase().replace(/\s+/g, '_'), tool.category, 
          tool.source_type, tool.cost_monthly, tool.billing_cadence, deptId, renewalDate]
       );
+      toolIds.push(result.rows[0].id);
     }
 
-    res.json({ success: true, message: `Seeded ${mockDepartments.length} departments and ${mockTools.length} SaaS tools` });
+    const demoDecisions = [
+      { toolIndex: 7, type: 'approved', notes: 'Critical for sales pipeline', daysAgo: 5 },
+      { toolIndex: 9, type: 'approved', notes: 'Core infrastructure - must renew', daysAgo: 10 },
+      { toolIndex: 3, type: 'approved', notes: 'Engineering team depends on this daily', daysAgo: 3 },
+      { toolIndex: 13, type: 'cancelled', notes: 'Switching to PandaDoc - better pricing', daysAgo: 7 },
+      { toolIndex: 14, type: 'cancelled', notes: 'Moving to Google Drive', daysAgo: 2 },
+      { toolIndex: 6, type: 'under_review', notes: 'Evaluating alternatives - checking Pipedrive', daysAgo: 1 },
+      { toolIndex: 10, type: 'under_review', notes: 'Checking if New Relic is cheaper', daysAgo: 0 },
+    ];
+
+    for (const dec of demoDecisions) {
+      const toolId = toolIds[dec.toolIndex];
+      const decisionDate = dec.type !== 'pending' ? new Date(Date.now() - dec.daysAgo * 86400000) : null;
+      await db.query(
+        `INSERT INTO decisions (tool_id, decision_type, status, decided_by_email, decided_by_name, due_date, decision_date, notes)
+         VALUES ($1, $2, $2, $3, $4, (SELECT renewal_date FROM detected_tools WHERE id = $1), $5, $6)`,
+        [toolId, dec.type, 'demo@company.com', 'Demo User', decisionDate, dec.notes]
+      );
+    }
+
+    res.json({ success: true, message: `Seeded ${mockDepartments.length} departments, ${mockTools.length} SaaS tools, and ${demoDecisions.length} decisions` });
   } catch (error) {
     console.error('Error seeding demo data:', error);
     res.status(500).json({ error: 'Failed to seed demo data' });

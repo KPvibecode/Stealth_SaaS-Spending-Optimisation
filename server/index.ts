@@ -9,6 +9,7 @@ import toolsRoutes from './routes/tools.js';
 import departmentsRoutes from './routes/departments.js';
 import userAuthRoutes, { authMiddleware } from './routes/userAuth.js';
 import demoRoutes from './routes/demo.js';
+import decisionsRoutes from './routes/decisions.js';
 
 const app = express();
 const PORT = 3001;
@@ -32,6 +33,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/tools', toolsRoutes);
 app.use('/api/departments', departmentsRoutes);
 app.use('/api/demo', demoRoutes);
+app.use('/api/decisions', decisionsRoutes);
 
 app.get('/api/subscriptions', async (req, res) => {
   try {

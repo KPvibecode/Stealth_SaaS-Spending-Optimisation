@@ -218,7 +218,7 @@ router.get('/action/:token', async (req, res) => {
     );
 
     await db.query(
-      `UPDATE email_action_tokens SET used_at = NOW() 
+      `UPDATE email_action_tokens SET expires_at = NOW() 
        WHERE tool_id = $1 AND used_at IS NULL AND token != $2`,
       [tokenRow.tool_id, token]
     );

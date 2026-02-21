@@ -43,6 +43,11 @@ interface DecisionTool {
   decided_by_name: string | null;
   decision_date: string | null;
   decision_notes: string | null;
+  last_notified_at: string | null;
+  last_notif_tier: number | null;
+  notif_recipient: string | null;
+  email_action: string | null;
+  email_action_at: string | null;
 }
 
 interface DecisionStats {
@@ -284,6 +289,38 @@ function App() {
   function formatDate(date: string | null): string {
     if (!date) return 'Not set';
     return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function getNotificationStatus(tool: DecisionTool): { status: 'none' | 'sent' | 'action_taken' | 'expired'; label: string; detail: string; action?: string } {
+    if (!tool.last_notified_at) {
+      return { status: 'none', label: 'No notification sent', detail: '' };
+    }
+
+    if (tool.email_action && tool.email_action_at) {
+      const actionLabels: Record<string, string> = { approved: 'Approved', cancelled: 'Cancelled', under_review: 'Under Review' };
+      const actionLabel = actionLabels[tool.email_action] || tool.email_action;
+      return {
+        status: 'action_taken',
+        label: 'Action Taken via Email',
+        detail: `${actionLabel} by ${tool.notif_recipient} on ${formatDate(tool.email_action_at)}`,
+        action: tool.email_action
+      };
+    }
+
+    const daysLeft = getDaysUntilRenewal(tool.renewal_date);
+    if (daysLeft !== null && daysLeft <= 0) {
+      return {
+        status: 'expired',
+        label: 'Action Missed',
+        detail: `Notified ${tool.notif_recipient} (${tool.last_notif_tier}-day reminder) — renewal date passed`
+      };
+    }
+
+    return {
+      status: 'sent',
+      label: 'Notification Sent',
+      detail: `${tool.last_notif_tier}-day reminder sent to ${tool.notif_recipient} on ${formatDate(tool.last_notified_at)}`
+    };
   }
 
   function getFilteredDecisions(): DecisionTool[] {
@@ -668,6 +705,31 @@ function App() {
                         <span className={`status-badge ${status}`}>{status.replace('_', ' ')}</span>
                       </div>
                     </div>
+
+                    {(() => {
+                      const notif = getNotificationStatus(tool);
+                      return (
+                        <div className={`notification-status ${notif.status}`}>
+                          <div className="notif-indicator">
+                            <span className={`notif-icon ${notif.status}`}>
+                              {notif.status === 'sent' && '\u2709'}
+                              {notif.status === 'action_taken' && '\u2713'}
+                              {notif.status === 'expired' && '\u26A0'}
+                              {notif.status === 'none' && '\u2014'}
+                            </span>
+                            <div className="notif-text">
+                              <span className="notif-label">{notif.label}</span>
+                              {notif.detail && <span className="notif-detail">{notif.detail}</span>}
+                            </div>
+                          </div>
+                          {notif.action && (
+                            <span className={`notif-action-badge ${notif.action}`}>
+                              {notif.action === 'approved' ? 'Renewed' : notif.action === 'cancelled' ? 'Cancelled' : 'Under Review'}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {tool.decision_notes && (
                       <div className="decision-notes">

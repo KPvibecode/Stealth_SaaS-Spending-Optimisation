@@ -130,6 +130,15 @@ A SaaS spend management tool designed to detect spend risk early, route decision
 - `MICROSOFT_TENANT_ID` - Azure AD tenant ID (optional, defaults to 'common')
 
 ## Recent Changes
+- 2026-03-14: Dashboard UI redesign based on 10-step design framework
+  - Zone system layout: Zone 1 alerts, Zone 2 KPIs, Zone 3 supporting panels
+  - 2-column layout for all dashboard content below KPI row
+  - CSS donut chart for decision breakdown, horizontal bar chart for category spend
+  - Progress bar for completion rate tracking
+  - Loading skeleton states, proper empty states with action prompts
+  - Search functionality added to Tools page
+  - Refined design system: CSS variables, consistent spacing, modern typography
+  - Alert banner for overdue renewals with direct navigation
 - 2026-02-21: Email notification workflow
   - Resend integration for sending HTML emails
   - Reminder tiers at 30, 15, and 7 days before renewal
